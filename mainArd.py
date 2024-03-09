@@ -3,6 +3,7 @@ import win32api
 from ctypes import WinDLL
 import numpy as np
 from mss import mss as mss_module
+import serial
 
 def abortion():
     try:
@@ -49,12 +50,16 @@ class triggerbot:
             self.G = data["rgb"][1]
             self.B = data["rgb"][2]
             self.abort_key = data["abort_key"],
-            self.shoot_key = data["shoot_key"]
             self.delay_between_shots = data["delay_between_shots"] 
+            self.PORT = data["PORT"]
+            self.BAUD = data["BAUD"]
+            self.shoot_command = data["shoot_command"]
         except Exception as e:
             print("Error in config.json: ", str(e))
             self.exit_program = True
             abortion()
+        
+        self.ser = serial.Serial(self.PORT, self.BAUD, timeout=1)
 
     def cooldown(self):
         time.sleep(0.1)
@@ -81,7 +86,8 @@ class triggerbot:
             actual_delay = 0.01 * delay_percentage
             
             time.sleep(actual_delay)
-            keyboard.press_and_release(self.shoot_key)
+            shootCommandEncodedForArd = self.shoot_command.encode('utf-8')
+            self.ser.write(shootCommandEncodedForArd)
 
 
     def toggle(self):
